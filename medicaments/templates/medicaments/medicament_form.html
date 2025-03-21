@@ -1,0 +1,75 @@
+<form method="POST" enctype="multipart/form-data" id="medicamentForm">
+    {% csrf_token %}
+
+    <input type="hidden" id="medicamentId" name="medicamentId" value="{{ medicament.id|default:'' }}">
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="name" class="form-label">Nom</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ medicament.name|default:'' }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="generic_name" class="form-label">Nom Générique</label>
+            <input type="text" class="form-control" id="generic_name" name="generic_name" value="{{ medicament.generic_name|default:'' }}">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="category" class="form-label">Catégorie</label>
+            <select name="category" id="category" class="form-control select2" data-dropdown-parent="#medicamentModal">
+                <option></option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if medicament.category.id == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+                <option value="">Bonjour</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="dosage" class="form-label">Dosage</label>
+            <input type="text" class="form-control" id="dosage" name="dosage" value="{{ medicament.dosage|default:'' }}">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="unit_type" class="form-label">Type d'Unité</label>
+            <input type="text" class="form-control" id="unit_type" name="unit_type" value="{{ medicament.unit_type|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label for="manufacturer" class="form-label">Fabricant</label>
+            <input type="text" class="form-control" id="manufacturer" name="manufacturer" value="{{ medicament.manufacturer|default:'' }}">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="storage_conditions" class="form-label">Conditions de Stockage</label>
+            <input type="text" class="form-control" id="storage_conditions" name="storage_conditions" value="{{ medicament.storage_conditions|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label for="is_prescription_required" class="form-label">Prescription Nécessaire</label>
+            <select class="form-select" id="is_prescription_required" name="is_prescription_required">
+                {% for value, label in prescription_required_enum %}
+                    <option value="{{ value }}"
+                            {% if medicament.is_prescription_required == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <label for="image" class="form-label">Image</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+            {% if medicament.image %}
+                <img src="{{ medicament.image.url }}" alt="Image Actuelle"
+                     style="width: 100px; height: auto; margin-top: 10px;">
+            {% endif %}
+        </div>
+    </div>
+</form>

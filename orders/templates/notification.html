@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Notifications - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Gestion des Notifications</h1>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label for="dateFilter" class="form-label">Filtrer par date :</label>
+            <input type="date" id="dateFilter" class="form-control" onchange="fetchNotifications(currentFilter)">
+        </div>
+        <div class="col-md-9 text-end">
+            <button class="btn btn-secondary me-1" onclick="fetchNotifications('all')">Toutes</button>
+            <button class="btn btn-primary me-1" onclick="fetchNotifications('unread')">Non lues</button>
+            <button class="btn btn-success" onclick="fetchNotifications('read')">Lues</button>
+        </div>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="list-group" id="notifications-container"></div>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item">
+                <a class="page-link" href="#" id="prevPage" onclick="changePage(-1)">Précédent</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" id="currentPage">1</span>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" id="nextPage" onclick="changePage(1)">Suivant</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentFilter = "all";
+    const notificationsPerPage = 10;
+
+    $(document).ready(function () {
+        fetchNotifications();
+    });
+
+    function fetchNotifications(status = currentFilter) {
+        currentFilter = status;
+        const selectedDate = $("#dateFilter").val();
+
+        $.ajax({
+            url: "{% url 'get_notifications' %}",
+            type: "GET",
+            data: {
+                status: status,
+                date: selectedDate,
+                page: currentPage,
+                limit: notificationsPerPage
+            },
+            success: function (response) {
+                $("#notifications-container").empty();
+
+                if (!response.notifications || response.notifications.length === 0) {
+                    $("#notifications-container").html("<p class='text-muted text-center'>Aucune notification trouvée.</p>");
+                    updatePagination(1, 1);
+                    return;
+                }
+
+                response.notifications.forEach(notification => {
+                    const isUnread = !notification.is_read;
+                    const itemClass = isUnread ? "list-group-item-light" : "";
+
+                    const html = `
+                        <div class="list-group-item ${itemClass}">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="mb-1 fw-bold">${notification.message}</p>
+                                    <small class="text-muted">${notification.created_at}</small>
+                                </div>
+                            </div>
+                            <div class="mt-2 d-flex gap-2">
+                                ${isUnread ? `<button class="btn btn-sm btn-outline-primary" onclick="markAsRead(${notification.id})">Marquer comme lu</button>` : ""}
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification(${notification.id})">Supprimer</button>
+                            </div>
+                        </div>
+                    `;
+
+                    $("#notifications-container").append(html);
+                });
+
+                updatePagination(response.current_page, response.total_pages);
+            },
+            error: function () {
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur",
+                    text: "Impossible de récupérer les notifications.",
+                });
+            }
+        });
+    }
+
+    function markAsRead(id) {
+        $.post(`/mark-notification-read/${id}/`, {
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        }).done(() => fetchNotifications())
+          .fail(() => Swal.fire("Erreur", "Impossible de marquer comme lu.", "error"));
+    }
+
+    function deleteNotification(id) {
+        Swal.fire({
+            title: "Supprimer cette notification ?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Oui, supprimer",
+            cancelButtonText: "Annuler",
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d"
+        }).then(result => {
+            if (result.isConfirmed) {
+                $.post(`/delete-notification/${id}/`, {
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
+                }).done(() => fetchNotifications())
+                  .fail(() => Swal.fire("Erreur", "Impossible de supprimer.", "error"));
+            }
+        });
+    }
+
+    function changePage(direction) {
+        const nextPage = currentPage + direction;
+        if (nextPage < 1 || nextPage > totalPages) return;
+        currentPage = nextPage;
+        fetchNotifications();
+    }
+
+    function updatePagination(current, total) {
+        totalPages = total;
+        $("#currentPage").text(current);
+        $("#prevPage").parent().toggleClass("disabled", current === 1);
+        $("#nextPage").parent().toggleClass("disabled", current === total);
+    }
+</script>
+{% endblock %}

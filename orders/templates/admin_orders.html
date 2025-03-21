@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Commandes - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Gestion des Commandes</h1>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label for="dateFilter" class="form-label">Filtrer par date :</label>
+            <input type="date" id="dateFilter" class="form-control" onchange="fetchOrders('all')">
+        </div>
+        <div class="col-md-9 text-end">
+            <button class="btn btn-secondary" onclick="fetchOrders('all')">Toutes</button>
+            <button class="btn btn-warning" onclick="fetchOrders('pending')">En attente</button>
+            <button class="btn btn-success" onclick="fetchOrders('validated')">Validées</button>
+            <button class="btn btn-danger" onclick="fetchOrders('rejected')">Refusées</button>
+        </div>
+    </div>
+
+    <!-- Liste des commandes -->
+    <div class="list-group" id="orders-container">
+        <!-- Les commandes seront chargées ici dynamiquement -->
+    </div>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item">
+                <a class="page-link" href="#" id="prevPage" onclick="changePage(-1)">Précédent</a>
+            </li>
+            <li class="page-item"><span class="page-link" id="currentPage">1</span></li>
+            <li class="page-item">
+                <a class="page-link" href="#" id="nextPage" onclick="changePage(1)">Suivant</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;  // Default value
+    const ordersPerPage = 10;
+
+    $(document).ready(function () {
+        fetchOrders("all");
+    });
+
+    function fetchOrders(status) {
+        let selectedDate = $("#dateFilter").val();
+
+        $.ajax({
+            url: "{% url 'fetch_orders' %}",
+            type: "GET",
+            data: { status: status, date: selectedDate, page: currentPage, limit: ordersPerPage },
+            success: function (response) {
+                $("#orders-container").empty();
+
+                if (!response.orders || response.orders.length === 0) {
+                    $("#orders-container").html("<p class='text-muted text-center'>Aucune commande trouvée.</p>");
+                    updatePagination(1, 1);
+                    return;
+                }
+
+                response.orders.forEach(order => {
+                    let orderHTML = `
+                        <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">#ORD-${order.id} - ${order.medicament}</h5>
+                                <small class="text-muted">${order.created_at}</small>
+                            </div>
+                            <p class="mb-1">Quantité: ${order.quantity} - Total: ${order.total_price} MRU</p>
+                            <small class="badge ${getStatusClass(order.status.value)}">${order.status.label}</small>
+                            ${order.status.value === "pending" ? `
+                                <div class="mt-2">
+                                    <button class="btn btn-success btn-sm" onclick="confirmAction('accept', ${order.id})">Accepter</button>
+                                    <button class="btn btn-danger btn-sm" onclick="confirmAction('reject', ${order.id})">Refuser</button>
+                                </div>
+                            ` : ""}
+                        </a>
+                    `;
+                    $("#orders-container").append(orderHTML);
+                });
+
+                updatePagination(currentPage, response.total_pages);
+            },
+            error: function () {
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur",
+                    text: "Impossible de récupérer les commandes.",
+                });
+            }
+        });
+    }
+
+    function confirmAction(action, orderId) {
+        let actionText = action === "accept" ? "Accepter" : "Refuser";
+        let actionUrl = action === "accept" ? `/validate-order/${orderId}/` : `/reject-order/${orderId}/`;
+
+        Swal.fire({
+            title: `Confirmer ${actionText.toLowerCase()} cette commande ?`,
+            text: "Cette action est irréversible.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: action === "accept" ? "#28a745" : "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: actionText,
+            cancelButtonText: "Annuler"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: actionUrl,
+                    type: "POST",
+                    data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+                    success: function (response) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Succès",
+                            text: response.message,
+                        });
+                        fetchOrders("all");
+                    },
+                    error: function (xhr) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Erreur",
+                            text: xhr.responseJSON?.error || "Une erreur s'est produite.",
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    function getStatusClass(status) {
+        return status === "pending" ? "bg-warning text-white" :
+               status === "validated" ? "bg-success text-white" :
+               "bg-danger text-white";
+    }
+
+    function changePage(direction) {
+        let newPage = currentPage + direction;
+        if (newPage < 1 || newPage > totalPages) return;
+        currentPage = newPage;
+        fetchOrders("all");
+    }
+
+    function updatePagination(current, total) {
+        totalPages = total;
+        $("#currentPage").text(current);
+
+        // Enable/Disable pagination buttons
+        $("#prevPage").toggleClass("disabled", current === 1);
+        $("#nextPage").toggleClass("disabled", current >= total);
+    }
+</script>
+{% endblock %}

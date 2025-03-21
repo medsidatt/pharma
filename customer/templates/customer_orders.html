@@ -1,0 +1,202 @@
+{% extends "customer-base.html" %}
+
+{% block styles %}
+<style>
+    /* Styles du conteneur */
+    #orders-container {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+        padding: 1.5rem;
+    }
+
+    /* Titre de page */
+    .page-title {
+        color: #333;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Styles des boutons */
+    .btn {
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #4a6bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #3a5af9;
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+        margin-left: 1rem;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    /* Liste des commandes */
+    .orders {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .orders li {
+        align-items: center;
+        background-color: #f8f9fa;
+        border-left: 4px solid #4a6bff;
+        border-radius: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        padding: 1.25rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .orders li:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .orders li strong {
+        color: #333;
+        font-size: 1.1rem;
+        min-width: 150px;
+    }
+
+    /* Étiquettes de statut */
+    .status, .reception {
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .status {
+        background-color: #eef2ff;
+        color: #4a6bff;
+    }
+
+    .reception {
+        background-color: #e8f5e9;
+        color: #28a745;
+    }
+
+    /* Prix */
+    .price {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .orders li {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .orders li button {
+            margin-top: 0.5rem;
+            margin-left: 0;
+        }
+    }
+
+    /* État vide */
+    #orders-list p {
+        color: #6c757d;
+        font-style: italic;
+        padding: 1rem 0;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block title %}Mes Commandes{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Mes Commandes</h1>
+    <button class="btn btn-primary" onclick="fetchOrders()">Actualiser la liste</button>
+
+    <div id="orders-container">
+        <ul id="orders-list" class="orders"></ul>
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        fetchOrders();
+        setInterval(fetchOrders, 5000); // Actualisation toutes les 5 secondes
+    });
+
+    function markAsReceived(orderId) {
+        $.ajax({
+            url: `/mark-received/${orderId}/`,
+            type: "POST",
+            data: {
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            success: function(response) {
+                fetchOrders(); // Rafraîchit la liste après confirmation
+            },
+            error: function(xhr) {
+                alert("Erreur lors de la mise à jour de la commande.");
+            }
+        });
+    }
+
+    function fetchOrders() {
+        $.ajax({
+            url: "{% url 'view_orders' %}",
+            type: "GET",
+            dataType: "json",
+            success: function(data) {
+                let ordersHtml = "";
+                if (data.length === 0) {
+                    ordersHtml = "<p>Aucune commande en cours.</p>";
+                } else {
+                    data.forEach(function(order) {
+                        const statut = order.status === "validated" ? "Validée" :
+                                       order.status === "pending" ? "En attente" :
+                                       order.status === "cancelled" ? "Annulée" : order.status;
+
+                        const reception = order.reception_status === "received" ? "Reçue" :
+                                          order.reception_status === "not_received" ? "Non reçue" : order.reception_status;
+
+                        ordersHtml += `
+                            <li>
+                                <strong>${order.medicament__name}</strong> - ${order.quantity} pcs -
+                                <span class="price">${order.total_price} MRU</span> -
+                                <span class="status">Statut : ${statut}</span> -
+                                <span class="reception">Réception : ${reception}</span>
+                                ${order.status === "validated" && order.reception_status === "not_received" ?
+                                    `<button class="btn btn-success" onclick="markAsReceived(${order.id})">Marquer comme reçue</button>` : ""}
+                            </li>
+                        `;
+                    });
+                }
+                $("#orders-list").html(ordersHtml);
+            },
+            error: function(xhr) {
+                alert("Erreur lors du chargement des commandes.");
+            }
+        });
+    }
+</script>
+{% endblock %}

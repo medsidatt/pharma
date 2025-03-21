@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Alimentations - Pharmacie{% endblock %}
+
+{% block content %}
+    <h1 class="mt-4">Alimentations</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+        <li class="breadcrumb-item active">Alimentations</li>
+    </ol>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <h4>Alimentations</h4>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#alimentationModal"
+                    id="addAlimentationBtn">+ Ajouter
+            </button>
+        </div>
+        <div class="card-body">
+            <table id="alimentationTable" class="table table-striped nowrap" style="width:100%">
+                <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Quantité</th>
+                    <th>Prix d'achat</th>
+                    <th>Date d'expiration</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alimentationModal" tabindex="-1"
+         aria-labelledby="alimentationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alimentationModalLabel">Titre du Modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-footer" id="modalFooter"></div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function showSwalMessage(title, text, icon, confirmButtonText = 'OK') {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                confirmButtonText: confirmButtonText
+            });
+        }
+
+        function handleErrors(xhr) {
+            let errorMsg = "Une erreur s'est produite. Veuillez réessayer.";
+
+            if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                let errors = xhr.responseJSON.errors;
+
+                $('.is-invalid').removeClass('is-invalid');
+                $('.invalid-feedback').remove();
+
+                $.each(errors, function (field, messages) {
+                    console.log(`${field}: ${messages}`);
+
+                    let input = $(`[name="${field}"]`);
+                    input.addClass('is-invalid');
+
+                    if (Array.isArray(messages)) {
+                        input.after(`<div class="invalid-feedback">${messages.join('<br>')}</div>`);
+                    } else if (typeof messages === 'string') {
+                        input.after(`<div class="invalid-feedback">${messages}</div>`);
+                    } else {
+                        console.warn(`Format d'erreur inattendu pour ${field}:`, messages);
+                        input.after(`<div class="invalid-feedback">Une erreur inattendue est survenue.</div>`);
+                    }
+                });
+
+                return;
+            }
+
+            if (xhr.responseText) {
+                errorMsg = xhr.responseText;
+            }
+        }
+
+        $(function () {
+            let table = $('#alimentationTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                responsive: true,
+                order: [[0, 'asc']],
+                ajax: {
+                    url: '/alimentations/',
+                    dataSrc: ''
+                },
+                columns: [
+                    {data: 'name', title: 'Nom'},
+                    {data: 'quantity', title: 'Quantité'},
+                    {data: 'purchase_price', title: 'Prix d\'achat'},
+                    {data: 'expiry_date', title: 'Date d\'expiration'},
+                    {
+                        data: null, title: 'Action', render: function (data, type, row) {
+                            return `<button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}"
+                                        data-bs-toggle="modal" data-bs-target="#alimentationModal">Modifier</button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${row.id}">Supprimer</button>`;
+                        }
+                    }
+                ]
+            });
+
+            function fetchData() {
+                $.get("/alimentations/", function (data) {
+                    table.clear();
+                    table.rows.add(data).draw();
+                });
+            }
+
+            fetchData();
+
+            $('#addAlimentationBtn').click(function () {
+                $('#alimentationModalLabel').text('Ajouter Alimentation');
+                $('#modalFooter').html(`
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" id="saveAlimentationBtn" class="btn btn-primary">Enregistrer</button>
+                `);
+
+                $.get("/alimentations/create/", function (data) {
+                    $('#modalBody').html(data);
+                    initJs();
+
+                    $('#saveAlimentationBtn').click(function () {
+                        let formData = new FormData($('#alimentationForm')[0]);
+
+                        $.ajax({
+                            url: "/alimentations/create/",
+                            type: "POST",
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function (response) {
+                                $('#alimentationModal').modal('hide');
+                                showSwalMessage('Succès!', 'Alimentation ajoutée avec succès.', 'success');
+                                fetchData();
+                            },
+                            error: function (xhr) {
+                                handleErrors(xhr);
+                                showSwalMessage('Erreur!', 'Une erreur s\'est produite. Veuillez réessayer.', 'error');
+                            }
+                        });
+                    });
+                });
+            });
+
+            $(document).on('click', '.edit-btn', function () {
+                let alimentationId = $(this).data('id');
+                $('#alimentationModalLabel').text('Modifier Alimentation');
+                $('#modalFooter').html(`
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" id="updateAlimentationBtn" class="btn btn-primary">Mettre à jour</button>
+                `);
+
+                $.get(`/alimentations/edit/${alimentationId}/`, function (data) {
+                    $('#modalBody').html(data);
+                    initJs();
+
+                    $('#updateAlimentationBtn').click(function () {
+                        let formData = new FormData($('#alimentationForm')[0]);
+
+                        $.ajax({
+                            url: `/alimentations/edit/${alimentationId}/`,
+                            type: "POST",
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function (response) {
+                                $('#alimentationModal').modal('hide');
+                                showSwalMessage('Succès!', 'Alimentation mise à jour avec succès.', 'success');
+                                fetchData();
+                            },
+                            error: function (xhr) {
+                                handleErrors(xhr);
+                                showSwalMessage('Erreur!', 'Une erreur s\'est produite. Veuillez réessayer.', 'error');
+                            }
+                        });
+                    });
+                });
+            });
+
+            $(document).on('click', '.delete-btn', function () {
+                let alimentationId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Êtes-vous sûr ?',
+                    text: "Vous ne pourrez pas revenir en arrière !",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Oui, supprimez-le!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `/alimentations/delete/${alimentationId}/`,
+                            type: "DELETE",
+                            headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                            success: function (response) {
+                                showSwalMessage('Supprimé!', 'L\'alimentation a été supprimée.', 'success');
+                                fetchData();
+                            },
+                            error: function (xhr) {
+                                showSwalMessage('Erreur!', 'Échec de la suppression de l\'alimentation.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            function initJs() {
+                $('.select2').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: "Sélectionner une alimentation",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+    </script>
+{% endblock %}

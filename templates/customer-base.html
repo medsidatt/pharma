@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MediQuick - Commandez vos médicaments en ligne en toute simplicité.">
+    <meta name="author" content="MediQuick">
+    <title>MediQuick - {% block title %}{% endblock %}</title>
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" type="image/png">
+    <link rel="stylesheet" href="{% static 'customer/style.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+
+    {% include 'partials/customer-header.html' %}
+
+    <main class="container main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2025 MediQuick. Tous droits réservés.</p>
+    </footer>
+
+    {% block script %}{% endblock %}
+</body>
+</html>

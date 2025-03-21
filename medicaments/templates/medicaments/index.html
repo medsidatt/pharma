@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Médicaments - Pharmacie{% endblock %}
+
+{% block content %}
+    <h1 class="mt-4">Médicaments</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+        <li class="breadcrumb-item active">Médicaments</li>
+    </ol>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <h4>Médicaments</h4>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#medicamentModal"
+                    id="addMedicamentBtn">+ Ajouter
+            </button>
+        </div>
+        <div class="card-body">
+            <table id="medicamentTable" class="table table-striped nowrap" style="width:100%">
+                <thead>
+                <tr>
+{#                    <th>Image</th>#}
+                    <th>Nom</th>
+                    <th>Nom générique</th>
+                    <th>Catégorie</th>
+                    <th>Dosage</th>
+                    <th>Type d'unité</th>
+                    <th>Fabricant</th>
+                    <th>Conditions de stockage</th>
+                    <th>Prescription requise</th>
+                    <th>Prix d'achat</th>
+                    <th>Prix de vente</th>
+
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal fade" id="medicamentModal" tabindex="-1"
+         aria-labelledby="medicamentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="medicamentModalLabel">Titre de la modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-footer" id="modalFooter"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    function handleErrors(xhr) {
+        let errorMsg = "Une erreur est survenue. Veuillez réessayer.";
+
+        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+            let errors = xhr.responseJSON.errors;
+
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+
+            $.each(errors, function (field, messages) {
+                let input = $(`[name="${field}"]`);
+                input.addClass('is-invalid');
+
+                if (Array.isArray(messages)) {
+                    input.after(`<div class="invalid-feedback">${messages.join('<br>')}</div>`);
+                } else if (typeof messages === 'string') {
+                    input.after(`<div class="invalid-feedback">${messages}</div>`);
+                } else {
+                    input.after(`<div class="invalid-feedback">Une erreur inattendue est survenue.</div>`);
+                }
+            });
+
+            return;
+        }
+
+        if (xhr.responseText) {
+            errorMsg = xhr.responseText;
+        }
+    }
+
+    $(function () {
+        let table = $('#medicamentTable').DataTable({
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+            responsive: true,
+            order: [[0, 'asc']],
+            ajax: {
+                url: '/medicaments/',
+                dataSrc: ''
+            },
+            columns: [
+                {data: 'name', title: 'Nom'},
+                {data: 'generic_name', title: 'Nom générique'},
+                {data: function(category) {
+                    return category.name
+                }, title: 'Catégorie'},
+                {data: 'dosage', title: 'Dosage'},
+                {data: 'unit_type', title: 'Type d\'unité'},
+                {data: 'manufacturer', title: 'Fabricant'},
+                {data: 'storage_conditions', title: 'Conditions de stockage'},
+                {
+                    data: 'is_prescription_required', title: 'Prescription requise', render: function (data) {
+                        return data ? 'Oui' : 'Non';
+                    }
+                },
+                {
+                    data: 'purchase_price', title: 'Prix d\'achat', render: function (data) {
+                        if (!isNaN(data) && data.purchase_price >= 0) {
+                            return `${parseFloat(data).toFixed(2)}`;
+                        }
+                        return 'Prix invalide';
+                    }
+                },
+                {
+                    data: 'selling_price', title: 'Prix de vente', render: function (data) {
+                        if (!isNaN(data) && data.selling_price >= 0) {
+                            return `${parseFloat(data).toFixed(2)}`;
+                        }
+                        return 'Prix invalide';
+                    }
+                },
+                {
+                    data: null, title: 'Action', render: function (data, type, row) {
+                        return `<button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#medicamentModal">Modifier</button>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="${row.id}">Supprimer</button>`;
+                    }
+                }
+            ]
+        });
+
+        function fetchData() {
+            $.get("/medicaments/", function (data) {
+                table.clear();  // Vider les données actuelles du tableau
+                table.rows.add(data).draw();  // Ajouter les nouvelles données
+            });
+        }
+
+        fetchData();
+
+        $('#addMedicamentBtn').click(function () {
+            $('#medicamentModalLabel').text('Ajouter un médicament');
+            $('#modalFooter').html(`
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" id="saveMedicamentBtn" class="btn btn-primary">Sauvegarder</button>
+            `);
+
+            $.get("/medicaments/create/", function (data) {
+                $('#modalBody').html(data);
+                initJs();
+
+                $('#saveMedicamentBtn').click(function () {
+                    let formData = new FormData($('#medicamentForm')[0]);
+                    let categoryText = $('#category').select2('data')[0]?.text || '';
+                    formData.set('category', categoryText);
+
+                    $.ajax({
+                        url: "/medicaments/create/",
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            $('#medicamentModal').modal('hide');
+                            Swal.fire({
+                                title: 'Succès!',
+                                text: 'Médicament ajouté avec succès.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                            fetchData();  // Rafraîchir les données
+                        },
+                        error: function (xhr) {
+                            handleErrors(xhr);
+                        }
+                    });
+                });
+            });
+        });
+
+        $(document).on('click', '.edit-btn', function () {
+            let medicamentId = $(this).data('id');
+            $('#medicamentModalLabel').text('Modifier le médicament');
+            $('#modalFooter').html(`
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" id="updateMedicamentBtn" class="btn btn-primary">Mettre à jour</button>
+            `);
+
+            $.get(`/medicaments/edit/${medicamentId}/`, function (data) {
+                $('#modalBody').html(data);
+                initJs();
+
+                $('#updateMedicamentBtn').click(function () {
+                    let formData = new FormData($('#medicamentForm')[0]);
+                    let categoryText = $('#category').select2('data')[0]?.text || '';
+                    formData.set('category', categoryText);
+
+                    $.ajax({
+                        url: `/medicaments/edit/${medicamentId}/`,
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            $('#medicamentModal').modal('hide');
+                            Swal.fire({
+                                title: 'Succès!',
+                                text: 'Médicament mis à jour avec succès.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                            fetchData();  // Rafraîchir les données
+                        },
+                        error: function (xhr) {
+                            handleErrors(xhr);
+                        }
+                    });
+                });
+            });
+        });
+
+        function initJs() {
+            $('.select2').select2({
+                tags: true,
+                theme: 'bootstrap-5',
+                placeholder: "Sélectionner ou saisir une nouvelle catégorie",
+                allowClear: true,
+                width: '100%'
+            })
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="mt-4">Suivi des Stocks</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+        <li class="breadcrumb-item active">Suivi des Stocks</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <h4>Suivi des Stocks</h4>
+        </div>
+        <div class="card-body">
+            <table id="stocks" class="table table-striped nowrap" style="width:100%">
+            <thead>
+            <tr>
+                <th>Étiquette</th>
+                <th>Quantité Entrée</th>
+                <th>Stock Actuel</th>
+                <th>Quantité Sortie</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(function () {
+
+            let table = $('#stocks').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                responsive: true,
+                order: [[0, 'asc']],
+                ajax: {
+                    url: '/stocks/',
+                    dataSrc: ''
+                },
+                columns: [
+                    {data: 'name', title: 'Nom'},
+                    {data: 'quantity_in', title: 'Quantité Entrée'},
+                    {data: 'quantity_out', title: 'Quantité Sortie'},
+                    {data: 'quantity_current', title: 'Stock Actuel'},
+                ]
+            });
+
+            function fetchData() {
+                $.get("/stocks/", function (data) {
+                    table.clear();
+                    table.rows.add(data).draw();
+                });
+            }
+
+            fetchData();
+        })
+    </script>
+{% endblock %}

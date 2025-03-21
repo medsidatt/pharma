@@ -1,0 +1,31 @@
+# Virtual environment
+env/
+venv/
+*.venv/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django-specific
+*.log
+*.pot
+*.pyc
+db.sqlite3  # Exclude local SQLite database (if using)
+media/  # Exclude uploaded files (if applicable)
+staticfiles/  # Exclude collected static files
+
+# OS-generated files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+
+# IDE files
+.idea/  # PyCharm
+.vscode/  # VS Code
+
+# Other unnecessary files
+*.swp
+*.swo
+*.bak
+*.tmp

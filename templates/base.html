@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>{% block title %}Pharma - {{ title }}{% endblock title %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Mantis - Free Admin Template using Bootstrap 5.">
+    <meta name="author" content="CodedThemes">
+    <link rel="icon" href="{% static 'assets/images/favicon.svg' %}" type="image/x-icon">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'assets/fonts/tabler-icons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/feather.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/material.css' %}">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" id="main-style-link">
+    <link rel="stylesheet" href="{% static 'assets/css/style-preset.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/select2.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/datatables/jquery.dataTables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/datatables/responsive.dataTables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/toastr.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/select2-bootstrap-5-theme.min.css' %}">
+
+    {% block extra_css %}{% endblock %}
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/js/select2.js' %}"></script>
+</head>
+<body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
+    <!-- Preloader -->
+    <div class="loader-bg">
+        <div class="loader-track">
+            <div class="loader-fill"></div>
+        </div>
+    </div>
+
+    {% include 'partials/sidebar.html' %}
+    {% include 'partials/header.html' %}
+
+    <div class="pc-container">
+        <div class="pc-content">
+            {% block page_header %}{% endblock page_header %}
+            {% block content %}{% endblock content %}
+        </div>
+    </div>
+
+    {% include 'partials/footer.html' %}
+
+    {% block extra_js %}{% endblock extra_js %}
+
+    <!-- Required Scripts -->
+    <script src="{% static 'assets/js/plugins/apexcharts.min.js' %}"></script>
+    <script src="{% static 'assets/js/pages/dashboard-default.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/popper.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/simplebar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/bootstrap.min.js' %}"></script>
+    <script src="{% static 'assets/js/pcoded.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/feather.min.js' %}"></script>
+    <script src="{% static 'assets/js/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'assets/js/datatables/dataTables.responsive.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/scripts.js' %}"></script>
+    <script src="{% static 'assets/js/toastr.min.js' %}"></script>
+    <script src="{% static 'assets/js/sweetalert2.js' %}"></script>
+
+    <!-- UI Customization Scripts -->
+    <script>layout_change('light');</script>
+    <script>change_box_container('false');</script>
+    <script>layout_rtl_change('false');</script>
+    <script>preset_change("preset-1");</script>
+    <script>font_change("Public-Sans");</script>
+
+    <script>
+  function fetchNotifications() {
+    $.ajax({
+      url: "{% url 'get_notifications' %}",
+      type: "GET",
+      dataType: "json",
+      success: function(response) {
+        let notifList = $("#notifications-list");
+        let notifCount = $("#notif-count");
+        notifList.empty();
+
+        if (response.notifications.length === 0) {
+          notifList.append('<li class="list-group-item text-muted text-center">Aucune notification</li>');
+          notifCount.hide();
+        } else {
+          notifCount.text(response.count).show();
+          response.notifications.forEach(notification => {
+            notifList.append(`
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${notification.message}</span>
+                <small class="text-muted">${notification.time}</small>
+              </li>
+            `);
+          });
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Erreur lors du chargement des notifications:", error);
+      }
+    });
+  }
+
+  function clearNotifications() {
+    $.ajax({
+      url: "{% url 'clear_notifications' %}",
+      type: "POST",
+      data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+      success: function(response) {
+        if (response.status === "success") {
+          fetchNotifications();
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Erreur lors de la suppression des notifications:", error);
+      }
+    });
+    return false;
+  }
+
+  $(document).ready(function() {
+    fetchNotifications();
+    setInterval(fetchNotifications, 10000); // Rafraîchir toutes les 10 secondes
+
+    // ✅ Toggle dropdown visibility when clicking on the bell icon
+    $("#notifDropdown").click(function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      $("#notif-menu").toggle();
+    });
+
+    // ✅ Close dropdown when clicking outside
+    $(document).click(function (e) {
+      if (!$(e.target).closest("#notifDropdown, #notif-menu").length) {
+        $("#notif-menu").hide();
+      }
+    });
+
+    // ✅ Ensure Bootstrap Dropdown is properly initialized
+    var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+    dropdownElementList.map(function (dropdownToggleEl) {
+      return new bootstrap.Dropdown(dropdownToggleEl);
+    });
+  });
+</script>
+
+
+
+</body>
+</html>

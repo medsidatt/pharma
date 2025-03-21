@@ -1,0 +1,19 @@
+<header>
+    <div class="container">
+        <nav>
+            <div class="logo">💊 MediQuick</div>
+            <ul class="nav-links">
+                <li><a href="{% url 'home' %}">Médicaments</a></li>
+                <li><a href="{% url 'chatbot' %}">Chatbot Santé</a></li>
+                <li><a href="{% url 'orders' %}">Mes Commandes</a></li>
+                <li>
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'logout' %}" class="logout-btn">Se déconnecter</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="login-btn">Se connecter</a>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>

@@ -1,0 +1,53 @@
+<form method="POST" id="alimentationForm">
+    {% csrf_token %}
+
+    <input type="hidden" id="alimentationId" name="alimentationId" value="{{ alimentation.id|default:'' }}">
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="batch_number" class="form-label">Batch Number</label>
+            <input type="text" class="form-control" id="batch_number" name="batch_number"
+                   value="{{ alimentation.batch_number|default:'' }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="medicament_id" class="form-label">Medicament</label>
+            <select name="medicament_id" id="medicament_id" class="form-control select2"
+                    data-dropdown-parent="#alimentationModal">
+                <option></option>
+                {% for medicament in medicaments %}
+                    <option value="{{ medicament.id }}"
+                            {% if alimentation.medicament.id == medicament.id %}selected{% endif %}>
+                        {{ medicament.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="purchase_price" class="form-label">Purchase Price</label>
+            <input type="text" class="form-control" id="purchase_price" name="purchase_price"
+                   value="{{ alimentation.purchase_price|default:'' }}">
+        </div>
+
+        <div class="col-md-6">
+            <label for="selling_price" class="form-label">Sell Price</label>
+            <input type="text" class="form-control" id="selling_price" name="selling_price"
+                   value="{{ alimentation.selling_price|default:'' }}">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="text" class="form-control" id="quantity" name="quantity"
+                   value="{{ alimentation.quantity|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label for="expiry_date" class="form-label">Date Of Expiration</label>
+            <input type="date" class="form-control" id="expiry_date" name="expiry_date"
+                   value="{{ alimentation.expiry_date|date:'Y-m-d'|default:'' }}"></div>
+    </div>
+</form>

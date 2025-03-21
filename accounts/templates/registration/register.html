@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>{% block title %}Pharma - Register{% endblock title %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Register to Pharma">
+    <link rel="icon" href="{% static 'assets/images/favicon.svg' %}" type="image/x-icon">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome.css' %}">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" id="main-style-link">
+</head>
+<body class="bg-primary">
+    <div id="layoutAuthentication">
+        <div id="layoutAuthentication_content">
+            <main>
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-5">
+                            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                <div class="card-header">
+                                    <h3 class="text-center font-weight-light my-4">Register</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post" action="{% url 'register' %}">
+                                        {% csrf_token %}
+
+                                        <div class="form-floating mb-3">
+                                            {{ form.username }}
+                                            {{ form.username.label_tag }}
+                                            {% if form.username.errors %}
+                                                <div class="text-danger">{{ form.username.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            {{ form.email }}
+                                            {{ form.email.label_tag }}
+                                            {% if form.email.errors %}
+                                                <div class="text-danger">{{ form.email.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            {{ form.phone_number }}
+                                            {{ form.phone_number.label_tag }}
+                                            {% if form.phone_number.errors %}
+                                                <div class="text-danger">{{ form.phone_number.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            {{ form.address }}
+                                            {{ form.address.label_tag }}
+                                            {% if form.address.errors %}
+                                                <div class="text-danger">{{ form.address.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            {{ form.password1 }}
+                                            {{ form.password1.label_tag }}
+                                            {% if form.password1.errors %}
+                                                <div class="text-danger">{{ form.password1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            {{ form.password2 }}
+                                            {{ form.password2.label_tag }}
+                                            {% if form.password2.errors %}
+                                                <div class="text-danger">{{ form.password2.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <button class="btn btn-primary w-100" type="submit">Register</button>
+                                    </form>
+                                </div>
+                                <div class="card-footer text-center py-3">
+                                    <div class="small">
+                                        <a href="{% url 'login' %}">Already have an account? Login!</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div id="layoutAuthentication_footer">
+            <footer class="py-4 bg-light mt-auto">
+                <div class="container-fluid px-4">
+                    <div class="d-flex align-items-center justify-content-between small">
+                        <div class="text-muted">Copyright &copy; Your Website 2023</div>
+                        <div>
+                            <a href="#">Privacy Policy</a>
+                            &middot;
+                            <a href="#">Terms &amp; Conditions</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap Script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

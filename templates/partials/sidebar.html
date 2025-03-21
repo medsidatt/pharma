@@ -1,0 +1,91 @@
+<!-- [ Sidebar Menu ] start -->
+{% load static %}
+<script>
+    var LOGO_DARK = "{% static 'assets/images/logo-dark.svg' %}";
+    var LOGO_WHITE = "{% static 'assets/images/logo-white.svg' %}";
+</script>
+
+<nav class="pc-sidebar">
+    <div class="navbar-wrapper">
+        <div class="m-header">
+            <a href="{% url 'dashboard' %}" class="b-brand text-primary">
+                <img src="{% static 'assets/images/logo-dark.svg' %}" class="img-fluid logo-lg" alt="logo">
+            </a>
+        </div>
+        <div class="navbar-content">
+            <ul class="pc-navbar">
+                <li class="pc-item">
+                    <a href="{% url 'dashboard' %}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                        <span class="pc-mtext">Tableau de bord</span>
+                    </a>
+                </li>
+
+                <li class="pc-item pc-caption">
+                    <label>Menu Principal</label>
+                    <i class="ti ti-dashboard"></i>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'medicaments:index'%}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-medical-cross"></i></span>
+                        <span class="pc-mtext">Médicaments</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'alimentations:index'%}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-archive"></i></span>
+                        <span class="pc-mtext">Stocks de Médicaments</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'stocks:index'%}" class="pc-link">
+                        <span class="pc-micon"><i class="ti ti-history"></i></span>
+                        <span class="pc-mtext">Suivi des Stocks</span>
+                    </a>
+                </li>
+
+                <li class="pc-item">
+                    <a href="{% url 'orders' %}" id="orders-link"
+                       class="pc-link d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="pc-micon"><i class="ti ti-clipboard-list"></i></span>
+                            <span class="pc-mtext">Suivi des Ordres</span>
+                        </div>
+                        <span id="notif-counter" class="badge bg-danger ms-2" style="display: none;">0</span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- [ Sidebar Menu ] end -->
+
+<script>
+    $(document).ready(function () {
+        // Charger le compteur au chargement
+        $.get("{% url 'get_notifications' %}", {status: "unread"}, function (response) {
+            const count = response.notifications.length;
+            if (count > 0) {
+                $("#notif-counter").text(count).show();
+            }
+        });
+
+        // Lorsqu'on clique sur "Suivi des Ordres"
+        $("#orders-link").on("click", function (e) {
+            e.preventDefault(); // Empêche la redirection immédiate
+            $.post("{% url 'clear_notifications' %}", {
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            }, function () {
+                $("#notif-counter").fadeOut();
+                // Redirige après avoir marqué comme lues
+                window.location.href = $(e.currentTarget).attr("href");
+            });
+        });
+    });
+</script>
+
+
