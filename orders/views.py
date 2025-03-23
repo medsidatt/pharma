@@ -245,13 +245,15 @@ def send_whatsapp_notification(order):
         logger.error(f"WhatsApp notification failed: No phone number for user {order.user.username}.")
         return
 
-
-    TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-    TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    # client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    # account_sid = 'AC90667503b444f9b48abf7f1133df1d6a'
+    # auth_token = '60d089af9f4f035767eca892b542b78a'
+    # client = Client(account_sid, auth_token)
+    client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
 
     message_body = f"""
-    ✅ [MediQuick] Commande validée ✅
+    [💊 MediQuick] 
+    ✅ Commande validée ✅
     Bonjour {order.user.username}, 
     Votre commande #{order.id} pour {order.quantity}x {order.medicament.name} a été validée.
     Total: {order.total_price} MRU.
@@ -263,8 +265,10 @@ def send_whatsapp_notification(order):
         message = client.messages.create(
             from_=settings.TWILIO_WHATSAPP_NUMBER,
             body=message_body,
-            to=f"whatsapp:{user_phone}"
+            # to=f"whatsapp:{user_phone}"
+            to=f"whatsapp:+22248282490"
         )
+        
         logger.info(f"WhatsApp Message Sent: {message.sid} to {user_phone}")
 
     except Exception as e:

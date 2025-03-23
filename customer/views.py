@@ -89,3 +89,85 @@ def get_medicaments(request):
 # 🤖 Chatbot Médical
 # ==========================
 
+# @login_required
+# def chatbot_response(request):
+#     """Répond uniquement aux questions liées à la santé, sinon renvoie un message de refus."""
+#     if request.method != "POST":
+#         return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+#
+#     user_message = request.POST.get("message", "").strip()
+#
+#     if not user_message:
+#         return JsonResponse({"error": "Veuillez entrer une question."}, status=400)
+#
+#     try:
+#         response = openai.ChatCompletion.create(
+#             model="gpt-4",
+#             messages=[
+#                 {
+#                     "role": "system",
+#                     "content": (
+#                         "Tu es un assistant médical. Réponds uniquement aux questions sur la santé et les médicaments. "
+#                         "Si une question ne concerne pas la santé, réponds : "
+#                         "'Je ne peux répondre qu'aux questions liées à la santé et aux médicaments.'"
+#                     )
+#                 },
+#                 {"role": "user", "content": user_message}
+#             ]
+#         )
+#
+#         bot_message = response["choices"][0]["message"]["content"]
+#
+#         # Vérification finale pour éviter un contournement
+#         if "je ne peux répondre qu'aux questions liées à la santé" in bot_message.lower():
+#             return JsonResponse({
+#                 "message": "❌ Désolé, je réponds uniquement aux questions liées à la santé et aux médicaments."
+#             }, status=200)
+#
+#         return JsonResponse({"message": bot_message})
+#
+#     except Exception as e:
+#         return JsonResponse({
+#             "error": "Une erreur est survenue. Merci de réessayer.",
+#             "details": str(e)  # Utile pour debug (peut être retiré en prod)
+#         }, status=500)
+
+# views.py
+import requests
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+# Hugging Face API setup
+API_TOKEN = "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"  # Your API token
+HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
+MODEL_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
+
+@login_required  # Restrict to logged-in users
+def chatbot_response(request):
+    if request.method == "POST":
+        question = request.POST.get("message", "").strip()  # Match template's 'message' key
+        if not question:
+            return JsonResponse({"message": "Please enter a question."}, status=400)
+
+        # Send question to Hugging Face API
+        payload = {
+            "inputs": question,
+            "parameters": {
+                "max_length": 100,
+                "temperature": 0.7,
+                "top_k": 50,
+                "do_sample": True
+            }
+        }
+        try:
+            response = requests.post(MODEL_URL, headers=HEADERS, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            if isinstance(result, list) and len(result) > 0:
+                answer = result[0].get("generated_text", "Sorry, I couldn’t generate a response.")
+                return JsonResponse({"message": answer})  # Match template's expectation
+            return JsonResponse({"message": "No response from the model."}, status=500)
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({"message": f"API error: {str(e)}"}, status=500)
+
+    return JsonResponse({"message": "Invalid request method."}, status=400)
