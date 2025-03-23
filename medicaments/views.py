@@ -237,3 +237,67 @@ def add_to_cart(request):
 
     # Simulation d'ajout au panier (vous pouvez stocker cela en session ou en base)
     return JsonResponse({'message': f'{medicament.name} ajouté au panier !'}, status=200)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Category, Medicament
+from utils.enums.enums import PrescriptionRequiredEnum
+import random
+
+@csrf_exempt  # For simplicity; remove in production or add CSRF protection
+def create_sample_medicaments(request):
+    """Endpoint to create 20 sample medicaments for testing"""
+    if request.method == "POST":
+        try:
+            # Ensure some categories exist
+            categories = [
+                "Analgesics", "Antibiotics", "Antivirals", "Cardiovascular", "Vitamins"
+            ]
+            for cat_name in categories:
+                Category.objects.get_or_create(name=cat_name)
+
+            # Sample data for medicaments
+            sample_medicaments = [
+                {"name": "Paracetamol", "generic_name": "Acetaminophen", "category": "Analgesics", "dosage": "500mg", "unit_type": "Tablet", "manufacturer": "PharmaCo", "storage_conditions": "Room Temp", "is_prescription_required": "NO"},
+                {"name": "Ibuprofen", "generic_name": "Ibuprofen", "category": "Analgesics", "dosage": "200mg", "unit_type": "Tablet", "manufacturer": "MediCorp", "storage_conditions": "Cool Dry Place", "is_prescription_required": "NO"},
+                {"name": "Amoxicillin", "generic_name": "Amoxicillin", "category": "Antibiotics", "dosage": "250mg", "unit_type": "Capsule", "manufacturer": "BioPharma", "storage_conditions": "Refrigerate", "is_prescription_required": "YES"},
+                {"name": "Ciprofloxacin", "generic_name": "Ciprofloxacin", "category": "Antibiotics", "dosage": "500mg", "unit_type": "Tablet", "manufacturer": "Genix", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Oseltamivir", "generic_name": "Oseltamivir", "category": "Antivirals", "dosage": "75mg", "unit_type": "Capsule", "manufacturer": "ViroMed", "storage_conditions": "Cool Dry Place", "is_prescription_required": "YES"},
+                {"name": "Acyclovir", "generic_name": "Acyclovir", "category": "Antivirals", "dosage": "400mg", "unit_type": "Tablet", "manufacturer": "PharmaCo", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Atenolol", "generic_name": "Atenolol", "category": "Cardiovascular", "dosage": "50mg", "unit_type": "Tablet", "manufacturer": "CardioLabs", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Lisinopril", "generic_name": "Lisinopril", "category": "Cardiovascular", "dosage": "10mg", "unit_type": "Tablet", "manufacturer": "MediCorp", "storage_conditions": "Cool Dry Place", "is_prescription_required": "YES"},
+                {"name": "Vitamin C", "generic_name": "Ascorbic Acid", "category": "Vitamins", "dosage": "1000mg", "unit_type": "Tablet", "manufacturer": "NutriHealth", "storage_conditions": "Room Temp", "is_prescription_required": "NO"},
+                {"name": "Vitamin D3", "generic_name": "Cholecalciferol", "category": "Vitamins", "dosage": "2000IU", "unit_type": "Capsule", "manufacturer": "VitaLabs", "storage_conditions": "Cool Dry Place", "is_prescription_required": "NO"},
+                {"name": "Aspirin", "generic_name": "Acetylsalicylic Acid", "category": "Analgesics", "dosage": "81mg", "unit_type": "Tablet", "manufacturer": "PharmaCo", "storage_conditions": "Room Temp", "is_prescription_required": "NO"},
+                {"name": "Azithromycin", "generic_name": "Azithromycin", "category": "Antibiotics", "dosage": "500mg", "unit_type": "Tablet", "manufacturer": "BioPharma", "storage_conditions": "Refrigerate", "is_prescription_required": "YES"},
+                {"name": "Metformin", "generic_name": "Metformin", "category": "Cardiovascular", "dosage": "500mg", "unit_type": "Tablet", "manufacturer": "Genix", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Omeprazole", "generic_name": "Omeprazole", "category": "Gastrointestinal", "dosage": "20mg", "unit_type": "Capsule", "manufacturer": "MediCorp", "storage_conditions": "Cool Dry Place", "is_prescription_required": "NO"},
+                {"name": "Loratadine", "generic_name": "Loratadine", "category": "Antihistamines", "dosage": "10mg", "unit_type": "Tablet", "manufacturer": "PharmaCo", "storage_conditions": "Room Temp", "is_prescription_required": "NO"},
+                {"name": "Simvastatin", "generic_name": "Simvastatin", "category": "Cardiovascular", "dosage": "20mg", "unit_type": "Tablet", "manufacturer": "CardioLabs", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Levothyroxine", "generic_name": "Levothyroxine", "category": "Hormones", "dosage": "50mcg", "unit_type": "Tablet", "manufacturer": "BioPharma", "storage_conditions": "Cool Dry Place", "is_prescription_required": "YES"},
+                {"name": "Prednisone", "generic_name": "Prednisone", "category": "Corticosteroids", "dosage": "10mg", "unit_type": "Tablet", "manufacturer": "Genix", "storage_conditions": "Room Temp", "is_prescription_required": "YES"},
+                {"name": "Folic Acid", "generic_name": "Folic Acid", "category": "Vitamins", "dosage": "400mcg", "unit_type": "Tablet", "manufacturer": "NutriHealth", "storage_conditions": "Room Temp", "is_prescription_required": "NO"},
+                {"name": "Cetirizine", "generic_name": "Cetirizine", "category": "Antihistamines", "dosage": "10mg", "unit_type": "Tablet", "manufacturer": "VitaLabs", "storage_conditions": "Cool Dry Place", "is_prescription_required": "NO"},
+            ]
+
+            # Create medicaments
+            for med in sample_medicaments:
+                category = Category.objects.get(name=med["category"])
+                Medicament.objects.create(
+                    name=med["name"],
+                    generic_name=med["generic_name"],
+                    category=category,
+                    dosage=med["dosage"],
+                    unit_type=med["unit_type"],
+                    manufacturer=med["manufacturer"],
+                    storage_conditions=med["storage_conditions"],
+                    is_prescription_required=med["is_prescription_required"],
+                    purchase_price=random.uniform(1.0, 50.0),  # Random price for testing
+                    selling_price=random.uniform(2.0, 60.0),   # Random price for testing
+                )
+
+            return JsonResponse({'message': '20 sample medicaments created successfully.'})
+        except Exception as e:
+            return JsonResponse({'errors': str(e)}, status=400)
+    else:
+        return JsonResponse({'message': 'Use POST to create sample medicaments.'}, status=405)
