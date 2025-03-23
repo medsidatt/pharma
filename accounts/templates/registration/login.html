@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="fr">
 <head>
-    <title>{% block title %}Pharma - Login{% endblock title %}</title>
+    <title>{% block title %}Pharma - Connexion{% endblock title %}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Mantis - Free Admin Template using Bootstrap 5.">
+    <meta name="description" content="Mantis - Modèle d'administration gratuit utilisant Bootstrap 5.">
     <meta name="author" content="CodedThemes">
     <link rel="icon" href="{% static 'assets/images/favicon.svg' %}" type="image/x-icon">
 
@@ -27,31 +27,31 @@
                         <div class="col-lg-5">
                             <div class="card shadow-lg border-0 rounded-lg mt-5">
                                 <div class="card-header">
-                                    <h3 class="text-center font-weight-light my-4">Login</h3>
+                                    <h3 class="text-center font-weight-light my-4">Connexion</h3>
                                 </div>
                                 <div class="card-body">
                                     {% if form.errors %}
                                         <div class="alert alert-danger">
-                                            Invalid username or password. Please try again.
+                                            Nom d'utilisateur ou mot de passe invalide. Veuillez réessayer.
                                         </div>
                                     {% endif %}
-                                    <form method="post">
+                                    <form method="post" action="{% url 'login' %}?next=/medicaments">
                                         {% csrf_token %}
                                         <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputEmail" name="username" type="text" placeholder="Username" required />
-                                            <label for="inputEmail">Username</label>
+                                            <input class="form-control" id="inputEmail" name="username" type="text" placeholder="Nom d'utilisateur" required />
+                                            <label for="inputEmail">Nom d'utilisateur</label>
                                         </div>
                                         <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputPassword" name="password" type="password" placeholder="Password" required />
-                                            <label for="inputPassword">Password</label>
+                                            <input class="form-control" id="inputPassword" name="password" type="password" placeholder="Mot de passe" required />
+                                            <label for="inputPassword">Mot de passe</label>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                            <button class="btn btn-primary" type="submit">Login</button>
+                                            <button class="btn btn-primary" type="submit">Se connecter</button>
                                         </div>
                                     </form>
                                 </div>
                                 <div class="card-footer text-center py-3">
-                                    <div class="small"><a href="{% url 'register' %}">Need an account? Sign up!</a></div>
+                                    <div class="small"><a href="{% url 'register' %}">Besoin d'un compte ? Inscrivez-vous !</a></div>
                                 </div>
                             </div>
                         </div>
@@ -63,11 +63,11 @@
             <footer class="py-4 bg-light mt-auto">
                 <div class="container-fluid px-4">
                     <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Your Website 2023</div>
+                        <div class="text-muted">Copyright © Votre site web 2023</div>
                         <div>
-                            <a href="#">Privacy Policy</a>
-                            &middot;
-                            <a href="#">Terms &amp; Conditions</a>
+                            <a href="#">Politique de confidentialité</a>
+                            ·
+                            <a href="#">Termes et conditions</a>
                         </div>
                     </div>
                 </div>

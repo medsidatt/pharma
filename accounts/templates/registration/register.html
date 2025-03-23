@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="fr">
 <head>
-    <title>{% block title %}Pharma - Register{% endblock title %}</title>
+    <title>{% block title %}Pharma - Inscription{% endblock title %}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Register to Pharma">
+    <meta name="description" content="Inscription à Pharma">
     <link rel="icon" href="{% static 'assets/images/favicon.svg' %}" type="image/x-icon">
 
     <!-- Fonts & Icons -->
@@ -25,10 +25,10 @@
                         <div class="col-lg-5">
                             <div class="card shadow-lg border-0 rounded-lg mt-5">
                                 <div class="card-header">
-                                    <h3 class="text-center font-weight-light my-4">Register</h3>
+                                    <h3 class="text-center font-weight-light my-4">Inscription</h3>
                                 </div>
                                 <div class="card-body">
-                                    <form method="post" action="{% url 'register' %}">
+                                    <form method="post" action="{% url 'register' %}?next=/medicaments">
                                         {% csrf_token %}
 
                                         <div class="form-floating mb-3">
@@ -73,12 +73,12 @@
                                                 <div class="text-danger">{{ form.password2.errors }}</div>
                                             {% endif %}
                                         </div>
-                                        <button class="btn btn-primary w-100" type="submit">Register</button>
+                                        <button class="btn btn-primary w-100" type="submit">S'inscrire</button>
                                     </form>
                                 </div>
                                 <div class="card-footer text-center py-3">
                                     <div class="small">
-                                        <a href="{% url 'login' %}">Already have an account? Login!</a>
+                                        <a href="{% url 'login' %}">Vous avez déjà un compte ? Connectez-vous !</a>
                                     </div>
                                 </div>
                             </div>
@@ -91,11 +91,11 @@
             <footer class="py-4 bg-light mt-auto">
                 <div class="container-fluid px-4">
                     <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Your Website 2023</div>
+                        <div class="text-muted">Copyright © Votre site web 2023</div>
                         <div>
-                            <a href="#">Privacy Policy</a>
-                            &middot;
-                            <a href="#">Terms &amp; Conditions</a>
+                            <a href="#">Politique de confidentialité</a>
+                            ·
+                            <a href="#">Termes et conditions</a>
                         </div>
                     </div>
                 </div>

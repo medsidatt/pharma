@@ -7,8 +7,10 @@ from accounts.form import CustomUserCreationForm, CustomLoginView, CustomLoginFo
 from utils.app import is_not_authenticated
 
 @user_passes_test(is_not_authenticated)
+# Assuming you have this form defined
+
 def login_view(request):
-    """Custom login view with redirection based on user role"""
+    """Vue de connexion personnalisée avec redirection basée sur le rôle de l'utilisateur"""
     if request.method == "POST":
         form = CustomLoginForm(request, data=request.POST)  # Pass request for CSRF validation
         if form.is_valid():
@@ -18,9 +20,11 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
-                messages.success(request, "Connexion réussie!")
+                messages.success(request, "Connexion réussie !")
 
-                return redirect("/")
+                # Handle the 'next' parameter
+                next_url = request.POST.get('next', request.GET.get('next', '/'))
+                return redirect(next_url)  # Redirect to 'next' URL or '/' if not provided
             else:
                 messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
         else:
@@ -29,20 +33,25 @@ def login_view(request):
         form = CustomLoginForm()
 
     return render(request, "registration/login.html", {"form": form})
-
 @user_passes_test(is_not_authenticated)
 def register_view(request):
+    """Vue d'inscription personnalisée avec redirection"""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('/')
+            messages.success(request, "Inscription réussie !")
+
+            # Handle the 'next' parameter
+            next_url = request.POST.get('next', request.GET.get('next', '/'))
+            return redirect(next_url)  # Redirect to 'next' URL or '/' if not provided
+        else:
+            messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     else:
         form = CustomUserCreationForm()
 
     return render(request, 'registration/register.html', {'form': form})
-
 @login_required
 def logout_view(request):
     logout(request)
